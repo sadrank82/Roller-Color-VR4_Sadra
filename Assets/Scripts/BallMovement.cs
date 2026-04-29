@@ -1,6 +1,9 @@
 using UnityEngine;
 using GG.Infrastructure.Utils.Swipe;
 using DG.Tweening;
+using UnityEngine.Events;
+using System.Collections.Generic;
+using System.IO;
 
 public class BallMovement : MonoBehaviour
 {
@@ -9,6 +12,8 @@ public class BallMovement : MonoBehaviour
     [SerializeField] private LayerMask wallsAndRoadsLayer;
     [SerializeField] private float stepDuration = 0.1f;
     private const float MAX_RAY_DISTANCE = 10f;
+
+    public UnityAction<List<RoadTile>,float> onMoveStart;
     private bool canMove = true;
 
 
@@ -46,11 +51,13 @@ public class BallMovement : MonoBehaviour
             RaycastHit[] hits = Physics.RaycastAll(transform.position, moveDirection, MAX_RAY_DISTANCE, wallsAndRoadsLayer.value);
             Vector3 targetPosition = transform.position;
             int steps = 0;
+            List<RoadTile> pathRoadTiles = new List<RoadTile>();
             for (int i = 0; i < hits.Length; i++)
             {
                 if (hits[i].collider.isTrigger) // Road Tile
                 {
-
+                    // add road tiles to the list to be painted
+                    pathRoadTiles.Add(hits[i].transform.GetComponent<RoadTile>());
                 }
                 else // Wall Tile
                 {
@@ -71,6 +78,11 @@ public class BallMovement : MonoBehaviour
             .DOMove(targetPosition,moveDuration)
             .SetEase(Ease.OutExpo)
             .OnComplete(()=> canMove=true);
+
+            if (onMoveStart != null)
+            {
+                onMoveStart.Invoke(pathRoadTiles,moveDuration);
+            }
 
         }
     }
