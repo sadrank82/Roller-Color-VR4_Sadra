@@ -36,7 +36,7 @@ public class LevelManager : MonoBehaviour
 
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < width; y++)
+            for (int y = 0; y < height; y++)
             {
                 // Get Pixel Color
                 Color pixelColor = levelTexture.GetPixel(x, y);
