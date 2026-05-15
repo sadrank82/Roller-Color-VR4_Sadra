@@ -39,6 +39,27 @@ public class BallRoadPainter : MonoBehaviour
 
         roadTile.isPainted = true;
         paintedRoadTiles++;
+         // Check level completion
+    if (paintedRoadTiles >= levelManager.roadTileList.Count)
+    {
+        Invoke(nameof(LoadNextLevel), duration + delay + 0.2f);
     }
+    }
+    private void LoadNextLevel()
+{
+    int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+    int nextSceneIndex = currentSceneIndex + 1;
+
+  // If there was a next level
+    if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+    {
+        SceneManager.LoadScene(nextSceneIndex);
+    }
+    else
+    {
+        // Return to the first level or the board.
+        SceneManager.LoadScene(0);
+    }
+}
 
 }
