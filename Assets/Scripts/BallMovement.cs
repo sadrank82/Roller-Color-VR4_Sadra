@@ -43,47 +43,60 @@ public class BallMovement : MonoBehaviour
             MoveBall();
         });
     }
-    private void MoveBall()
+      private void MoveBall()
+{
+    if (!canMove)
+        return;
+
+    canMove = false;
+
+    RaycastHit[] hits = Physics.RaycastAll(
+        transform.position,
+        moveDirection,
+        MAX_RAY_DISTANCE,
+        wallsAndRoadsLayer
+    );
+
+   // Sort by distance
+    System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+    Vector3 targetPosition = transform.position;
+    int steps = 0;
+
+    List<RoadTile> pathRoadTiles = new List<RoadTile>();
+
+    for (int i = 0; i < hits.Length; i++)
     {
-        if (canMove)
+        if (hits[i].collider.isTrigger)
         {
-            canMove = false;
-            RaycastHit[] hits = Physics.RaycastAll(transform.position, moveDirection, MAX_RAY_DISTANCE, wallsAndRoadsLayer.value);
-            Vector3 targetPosition = transform.position;
-            int steps = 0;
-            List<RoadTile> pathRoadTiles = new List<RoadTile>();
-            for (int i = 0; i < hits.Length; i++)
+            RoadTile roadTile = hits[i].transform.GetComponent<RoadTile>();
+
+            if (roadTile != null)
             {
-                if (hits[i].collider.isTrigger) // Road Tile
-                {
-                    // add road tiles to the list to be painted
-                    pathRoadTiles.Add(hits[i].transform.GetComponent<RoadTile>());
-                }
-                else // Wall Tile
-                {
-                    if (i == 0) // wall is near to Ball
-                    {
-                        canMove = true;
-                        return;
-                    }
-                    steps = i;
-                    targetPosition = hits[i-1].transform.position;
-                    break;
-                }
+                pathRoadTiles.Add(roadTile);
+                targetPosition = roadTile.transform.position;
+                steps++;
             }
-
-            // move the Ball to targetPosition
-            float moveDuration = stepDuration * steps;
-            transform
-            .DOMove(targetPosition,moveDuration)
-            .SetEase(Ease.OutExpo)
-            .OnComplete(()=> canMove=true);
-
-            if (onMoveStart != null)
-            {
-                onMoveStart.Invoke(pathRoadTiles,moveDuration);
-            }
-
+        }
+        else
+        {
+            break;
         }
     }
+
+  // If there was no way
+    if (steps == 0)
+    {
+        canMove = true;
+        return;
+    }
+
+    float moveDuration = stepDuration * steps;
+
+    transform.DOMove(targetPosition, moveDuration)
+        .SetEase(Ease.OutExpo)
+        .OnComplete(() => canMove = true);
+
+    onMoveStart?.Invoke(pathRoadTiles, moveDuration);
+}
 }
